@@ -315,7 +315,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             }}
           >
             <Phone size={16} color="var(--primary)" />
-            رقم هاتف ولي الأمر (لإرسال النتيجة والدرجة) *
+            رقم هاتف ولي الأمر *
           </label>
           <input
             type="tel"
