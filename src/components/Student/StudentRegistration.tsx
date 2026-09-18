@@ -76,7 +76,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
       style={{
         maxWidth: 520,
         width: "100%",
-        padding: "2.5rem 2rem",
+        padding: "2rem 1rem 2rem 1rem",
         margin: "0 auto",
         boxShadow: "0 20px 50px rgba(0, 0, 0, 0.25)",
         border: "1px solid var(--border-color)",
@@ -88,9 +88,9 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <div
           style={{
-            width: 70,
-            height: 70,
-            borderRadius: 22,
+            width: 50,
+            height: 50,
+            borderRadius: 10,
             background: "linear-gradient(135deg, var(--primary), #2563eb)",
             display: "inline-flex",
             alignItems: "center",
@@ -99,18 +99,18 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             boxShadow: "0 10px 25px rgba(37, 99, 235, 0.35)",
           }}
         >
-          <GraduationCap size={38} color="white" />
+          <GraduationCap size={25} color="white" />
         </div>
         <h1
           style={{
-            fontSize: "1.65rem",
+            fontSize: "1.5rem",
             fontWeight: 900,
             color: "var(--text-primary)",
             marginBottom: "0.4rem",
             letterSpacing: "-0.5px",
           }}
         >
-          منصة الامتحانات الإلكترونية
+          منصة الامتحانات 
         </h1>
         <p
           style={{
@@ -119,7 +119,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             fontWeight: 600,
           }}
         >
-          إعداد المدرس:{" "}
+          إعداد المهندس:{" "}
           <span style={{ color: "var(--primary)" }}>م. مؤمن أحمد</span>
         </p>
       </div>
@@ -204,13 +204,13 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             {[
               {
                 id: "الصف الأول الثانوي",
-                title: "الصف الأول الثانوي",
-                desc: "أولى ثانوي",
+                title: "أولى ثانوي",
+                desc: "",
               },
               {
                 id: "الصف الثاني الثانوي",
-                title: "الصف الثاني الثانوي",
-                desc: "تانية ثانوي",
+                title:  "تانية ثانوي",
+                desc: "",
               },
             ].map((item) => {
               const isSelected = grade === item.id;
@@ -219,7 +219,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
                   key={item.id}
                   onClick={() => setGrade(item.id)}
                   style={{
-                    border: `2px solid ${isSelected ? "var(--primary)" : "var(--border-color)"}`,
+                    border: `1px solid ${isSelected ? "var(--primary)" : "var(--border-color)"}`,
                     background: isSelected
                       ? "rgba(37, 99, 235, 0.08)"
                       : "var(--bg-surface)",
@@ -280,7 +280,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
             }}
           >
             <Phone size={16} color="var(--primary)" />
-            رقم هاتف الطالب (لإرسال توضيح وشرح الأخطاء) *
+            رقم هاتف الطالب *
           </label>
           <input
             type="tel"
@@ -335,18 +335,6 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
               textAlign: "right",
             }}
           />
-          <span
-            style={{
-              fontSize: "0.75rem",
-              color: "var(--text-muted)",
-              marginTop: 6,
-              display: "block",
-              lineHeight: 1.4,
-            }}
-          >
-            📲 يتم إرسال النتيجة لولي الأمر والشرح التفصيلي للأخطاء للطالب
-            تلقائياً.
-          </span>
         </div>
 
         {/* Buttons */}
@@ -375,7 +363,7 @@ export const StudentRegistration: React.FC<StudentRegistrationProps> = ({
               boxShadow: "0 8px 20px rgba(37, 99, 235, 0.3)",
             }}
           >
-            دخول ممر الامتحانات <ArrowLeft size={18} />
+            دخول <ArrowLeft size={18} />
           </button>
         </div>
       </form>

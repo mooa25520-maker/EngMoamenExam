@@ -5,11 +5,9 @@ import {
   User,
   GraduationCap,
   RotateCcw,
-  Check,
   ShieldAlert,
   BookOpen,
   BarChart2,
-  Send,
   Phone,
 } from "lucide-react";
 import { UserProfile } from "../types/exam";
@@ -37,32 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
   onResetData,
   isDarkTheme,
   onToggleTheme,
-  onOpenTelegramSettings,
 }) => {
   const [logoClicks, setLogoClicks] = useState(0);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [editName, setEditName] = useState(user.name);
-  const [editRollNo, setEditRollNo] = useState(user.rollNo);
-  const [editGrade, setEditGrade] = useState(
-    user.grade || "الصف الأول الثانوي",
-  );
-  const [editParentPhone, setEditParentPhone] = useState(
-    user.parentPhone || "",
-  );
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUserUpdate({
-      ...user,
-      name: editName.trim() || user.name,
-      rollNo: editRollNo.trim() || user.rollNo,
-      grade: editGrade,
-      parentPhone: editParentPhone.trim(),
-      registered: true,
-    });
-    setShowProfileModal(false);
-  };
 
   return (
     <>
@@ -135,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
                   lineHeight: 1.2,
                 }}
               >
-                منصة الاختبارات
+                منصة الامتحانات
               </div>
               <div
                 style={{
@@ -199,13 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Profile */}
             <button
-              onClick={() => {
-                setEditName(user.name);
-                setEditRollNo(user.rollNo);
-                setEditGrade(user.grade || "الصف الأول الثانوي");
-                setEditParentPhone(user.parentPhone || "");
-                setShowProfileModal(true);
-              }}
+              onClick={() => setShowProfileModal(true)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -253,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({
                   flexShrink: 0,
                 }}
               >
-                {user.name.charAt(0)}
+                {user.name ? user.name.charAt(0) : "ط"}
               </div>
             </button>
           </div>
@@ -363,11 +333,11 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <div>
-                <label className="form-label">رقم ولي الأمر</label>
+                <label className="form-label">رقم هاتف الطالب</label>
                 <input
                   className="form-input"
                   type="text"
-                  value={user.parentPhone || "غير مسجل"}
+                  value={user.studentPhone || "غير مسجل"}
                   readOnly
                   style={{
                     direction: "ltr",
@@ -380,13 +350,15 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <div>
-                <label className="form-label">رقم الجلوس / الكود</label>
+                <label className="form-label">رقم ولي الأمر</label>
                 <input
                   className="form-input"
                   type="text"
-                  value={user.rollNo}
+                  value={user.parentPhone || "غير مسجل"}
                   readOnly
                   style={{
+                    direction: "ltr",
+                    textAlign: "right",
                     background: "var(--bg-main)",
                     cursor: "not-allowed",
                     opacity: 0.85,
@@ -442,7 +414,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ShieldAlert size={22} color="#d97706" />
               <h3 style={{ fontSize: "1rem", fontWeight: 800 }}>
-                إعادة ضبط الاختبارات؟
+                إعادة ضبط البيانات؟
               </h3>
             </div>
             <p
@@ -452,7 +424,7 @@ export const Header: React.FC<HeaderProps> = ({
                 marginBottom: "1.25rem",
               }}
             >
-              سيتم استعادة الاختبارات الافتراضية. سجل النتائج لن يُحذف.
+              سيتم إعادة تعيين الاختبارات.
             </p>
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
@@ -476,6 +448,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       )}
+
       {/* Mobile Bottom Navigation Bar (< 768px) */}
       <nav className="mobile-bottom-nav md:hidden">
         {currentRole === "student" ? (

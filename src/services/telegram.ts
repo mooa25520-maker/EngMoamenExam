@@ -6,7 +6,7 @@ export interface TelegramConfig {
 
 const TELEGRAM_CONFIG_KEY = "exampulse_telegram_config_v1";
 
-// Default Telegram configuration (preset with instructor's Telegram Bot)
+// Default Telegram configuration
 export const defaultTelegramConfig: TelegramConfig = {
   botToken: "8631657441:AAFJ6jKIl2uUugAAOwTrfSrK1XJ-IqTWZOU",
   chatId: "5278153551",
@@ -61,18 +61,66 @@ export interface TelegramResultPayload {
   wrongQuestions?: WrongQuestionDetail[];
 }
 
-// ── Message 1: Short summary (always < 500 chars) ──
+const formatWa = (phone?: string) => {
+  if (!phone) return "";
+  const raw = phone.replace(/\D/g, "");
+  return raw.startsWith("0") ? `2${raw}` : raw;
+};
+
+// ── 1. رسالة ولي الأمر الجاهزة للنسخ/الإرسال ──
+export const formatParentMessage = (data: TelegramResultPayload): string => {
+  const mins = Math.floor(data.timeTakenSeconds / 60);
+  const secs = data.timeTakenSeconds % 60;
+  const timeStr = `${mins} دقيقة و ${secs} ثانية`;
+  const dateStr = data.dateStr || new Date().toLocaleString("ar-EG");
+  const statusEmoji = data.passed ? "✅ ناجح" : "❌ لم يجتز الاختبار";
+
+  return (
+    `السلام عليكم ورحمة الله وبركاته،\n` +
+    `إلى ولي أمر الطالب: ${data.studentName} (${data.grade || ""})\n\n` +
+    `نحيطكم علماً بنتيجة نجلك في اختبار:\n` +
+    `📝 ${data.examTitle}\n\n` +
+    `📊 الدرجة: ${data.score} من ${data.maxScore} (${data.percentage}%)\n` +
+    `🏁 النتيجة: ${statusEmoji}\n` +
+    `⏱️ الوقت المستغرق: ${timeStr}\n` +
+    `📅 التاريخ: ${dateStr}\n\n` +
+    `مع تحيات: م. مؤمن أحمد ✨`
+  );
+};
+
+// ── 2. رسالة الطالب الجاهزة للنسخ/الإرسال (تحليل وشرح الأخطاء) ──
+export const formatStudentMessage = (data: TelegramResultPayload): string => {
+  const dateStr = data.dateStr || new Date().toLocaleString("ar-EG");
+  let msg =
+    `أهلاً بك يا ${data.studentName} ✨\n` +
+    `إليك تقرير مراجعة إجاباتك في اختبار: ${data.examTitle}\n` +
+    `📊 درجتك: ${data.score} من ${data.maxScore} (${data.percentage}%)\n` +
+    `📅 التاريخ: ${dateStr}\n\n`;
+
+  if (data.wrongQuestions && data.wrongQuestions.length > 0) {
+    msg += `❌ الأسئلة التي أخطأت فيها مع الشرح والتوضيح (${data.wrongQuestions.length} سؤال):\n\n`;
+    data.wrongQuestions.forEach((w, idx) => {
+      msg +=
+        `${idx + 1}️⃣ س: ${w.questionText}\n` +
+        `• إجابتك: ${w.studentAnswerText}\n` +
+        `• الإجابة الصحيحة: ${w.correctAnswerText}\n` +
+        `• 💡 الشرح: ${w.explanation}\n\n`;
+    });
+  } else {
+    msg += `🎉 ممتاز يا بطل! لقد أجبت على جميع الأسئلة بصورة صحيحة 100%.\n\n`;
+  }
+
+  msg += `نتمنى لك دوام التوفيق والتميز!\nمع تحيات: م. مؤمن أحمد 🚀`;
+  return msg;
+};
+
+// ── 3. رسالة الملخص الكاملة لإشعارات تليجرام للبوت ──
 export const formatTelegramMessage = (data: TelegramResultPayload): string => {
   const mins = Math.floor(data.timeTakenSeconds / 60);
   const secs = data.timeTakenSeconds % 60;
   const dateStr = data.dateStr || new Date().toLocaleString("ar-EG");
   const statusEmoji = data.passed ? "✅ ناجح" : "❌ لم يجتز";
 
-  const formatWa = (phone?: string) => {
-    if (!phone) return "";
-    const raw = phone.replace(/\D/g, "");
-    return raw.startsWith("0") ? `2${raw}` : raw;
-  };
   const parentWaUrl = formatWa(data.parentPhone)
     ? `https://wa.me/${formatWa(data.parentPhone)}`
     : "";
@@ -81,23 +129,25 @@ export const formatTelegramMessage = (data: TelegramResultPayload): string => {
     : "";
 
   return (
-    `🎓 *نتيجة اختبار جديدة*\n` +
-    `👤 *${data.studentName}* — ${data.grade || ""}\n` +
-    `📝 ${data.examTitle}\n` +
-    `📊 ${data.score}/${data.maxScore} (${data.percentage}%) ${statusEmoji}\n` +
-    `⏱ ${mins}د ${secs}ث | � ${dateStr}\n` +
-    `📱 الطالب: \`${data.studentPhone || "—"}\`\n` +
-    `👨‍👩‍👦 ولي الأمر: \`${data.parentPhone || "—"}\`\n` +
-    (parentWaUrl ? `📲 واتساب ولي الأمر: ${parentWaUrl}\n` : "") +
-    (studentWaUrl ? `📲 واتساب الطالب: ${studentWaUrl}\n` : "") +
-    (data.wrongQuestions && data.wrongQuestions.length > 0
-      ? `\n❌ أسئلة خاطئة: ${data.wrongQuestions.length} سؤال — شرح مفصل يلي هذه الرسالة`
-      : `\n🎉 أجاب على جميع الأسئلة بشكل صحيح!`) +
-    `\n\n⚡ منصة م. مؤمن أحمد التعليمية`
+    `🎓 *إشعار نتيجة اختبار جديد*\n\n` +
+    `👤 *الطالب:* ${data.studentName} (${data.grade || ""})\n` +
+    `📝 *الاختبار:* ${data.examTitle}\n` +
+    `📊 *الدرجة:* ${data.score}/${data.maxScore} (${data.percentage}%) ${statusEmoji}\n` +
+    `⏱ *الوقت:* ${mins}د ${secs}ث | 📅 ${dateStr}\n` +
+    `📱 *هاتف الطالب:* \`${data.studentPhone || "غير مسجل"}\`\n` +
+    `👨‍👩‍👦 *هاتف ولي الأمر:* \`${data.parentPhone || "غير مسجل"}\`\n` +
+    (parentWaUrl ? `📲 *واتساب ولي الأمر:* ${parentWaUrl}\n` : "") +
+    (studentWaUrl ? `📲 *واتساب الطالب:* ${studentWaUrl}\n` : "") +
+    `--------------------------------\n` +
+    `👨‍👩‍👦 1. *رسالة ولي الأمر:* \n${formatParentMessage(data)}\n` +
+    `--------------------------------\n` +
+    `👨‍🎓 2. *رسالة الطالب:* \n${formatStudentMessage(data)}\n` +
+    `--------------------------------\n` +
+    `⚡ *منصة م. مؤمن أحمد التعليمية*`
   );
 };
 
-// ── Helper: send one raw message via Telegram API ──
+// Helper: send raw message to Telegram
 const sendOneMessage = async (
   botToken: string,
   chatId: string,
@@ -111,7 +161,6 @@ const sendOneMessage = async (
       body: JSON.stringify({ chat_id: chatId.trim(), text, parse_mode: "Markdown" }),
     });
     const json = await res.json();
-    // If Markdown parse fails, retry as plain text
     if (!json.ok && json.error_code === 400) {
       const res2 = await fetch(url, {
         method: "POST",
@@ -126,7 +175,6 @@ const sendOneMessage = async (
   }
 };
 
-// ── Main send function: 1 summary + chunked wrong-questions messages ──
 export const sendTelegramResult = async (
   payload: TelegramResultPayload,
   configOverride?: TelegramConfig
@@ -144,58 +192,52 @@ export const sendTelegramResult = async (
   }
 
   try {
-    // ── رسالة 1: ملخص النتيجة ──
-    const res1 = await sendOneMessage(
-      config.botToken,
-      config.chatId,
-      formatTelegramMessage(payload)
-    );
-    if (!res1.ok) {
-      console.error("Telegram Msg1 Error:", res1);
-      return { success: false, message: res1.description || "فشل إرسال رسالة النتيجة." };
-    }
+    // إرسال الرسالة الرئيسية الملخصة
+    const parentWaUrl = formatWa(payload.parentPhone) ? `https://wa.me/${formatWa(payload.parentPhone)}` : "";
+    const studentWaUrl = formatWa(payload.studentPhone) ? `https://wa.me/${formatWa(payload.studentPhone)}` : "";
 
-    // ── رسالة 2+: شرح الأسئلة الخاطئة مقسمة على أجزاء ──
-    if (payload.wrongQuestions && payload.wrongQuestions.length > 0) {
+    const summaryText =
+      `🎓 *إشعار نتيجة اختبار جديد*\n\n` +
+      `👤 *الطالب:* ${payload.studentName} (${payload.grade || ""})\n` +
+      `📝 *الاختبار:* ${payload.examTitle}\n` +
+      `📊 *الدرجة:* ${payload.score}/${payload.maxScore} (${payload.percentage}%) ${payload.passed ? "✅ ناجح" : "❌ لم يجتز"}\n` +
+      `📱 *هاتف الطالب:* \`${payload.studentPhone || "—"}\`\n` +
+      `👨‍👩‍👦 *هاتف ولي الأمر:* \`${payload.parentPhone || "—"}\`\n` +
+      (parentWaUrl ? `📲 *واتساب ولي الأمر:* ${parentWaUrl}\n` : "") +
+      (studentWaUrl ? `📲 *واتساب الطالب:* ${studentWaUrl}\n` : "");
+
+    await sendOneMessage(config.botToken, config.chatId, summaryText);
+
+    // إرسال نص رسالة ولي الأمر
+    const parentMsg = `👨‍👩‍👦 *[رسالة موجهة لولي الأمر]*\n\n` + formatParentMessage(payload);
+    await sendOneMessage(config.botToken, config.chatId, parentMsg);
+
+    // إرسال رسالة الطالب (تكون مقسمة إن كانت طويلة)
+    const studentMsgHeader = `👨‍🎓 *[رسالة موجهة للطالب - الشرح والأخطاء]*\n\n`;
+    const studentMsgBody = formatStudentMessage(payload);
+
+    const fullStudentText = studentMsgHeader + studentMsgBody;
+    if (fullStudentText.length <= 3800) {
+      await sendOneMessage(config.botToken, config.chatId, fullStudentText);
+    } else {
+      // إذا كانت رسالة الطالب طويلة، يتم تقسيمها
       const CHUNK_LIMIT = 3500;
-      const headerPart1 =
-        `👨‍🎓 *شرح الأسئلة الخاطئة*\n` +
-        `الطالب: ${payload.studentName} | ${payload.examTitle}\n` +
-        `عدد الأخطاء: ${payload.wrongQuestions.length} سؤال\n\n`;
-
-      let currentChunk = headerPart1;
-      let chunkNum = 1;
-      let questionsInChunk = 0;
-
-      for (let i = 0; i < payload.wrongQuestions.length; i++) {
-        const w = payload.wrongQuestions[i];
-        const entry =
-          `${i + 1}. ${w.questionText}\n` +
-          `   اجابتك: ${w.studentAnswerText}\n` +
-          `   الصواب: ${w.correctAnswerText}\n` +
-          `   الشرح: ${w.explanation}\n\n`;
-
-        if ((currentChunk + entry).length > CHUNK_LIMIT && questionsInChunk > 0) {
+      let currentChunk = studentMsgHeader;
+      const lines = studentMsgBody.split("\n");
+      for (const line of lines) {
+        if ((currentChunk + line + "\n").length > CHUNK_LIMIT) {
           await sendOneMessage(config.botToken, config.chatId, currentChunk.trim());
-          chunkNum++;
-          currentChunk = `(تابع — جزء ${chunkNum})\n\n` + entry;
-          questionsInChunk = 1;
+          currentChunk = `(تابع رسالة الطالب):\n` + line + "\n";
         } else {
-          currentChunk += entry;
-          questionsInChunk++;
+          currentChunk += line + "\n";
         }
       }
-
       if (currentChunk.trim()) {
-        await sendOneMessage(
-          config.botToken,
-          config.chatId,
-          currentChunk.trim() + "\n\n🚀 مع تحيات م. مؤمن أحمد"
-        );
+        await sendOneMessage(config.botToken, config.chatId, currentChunk.trim());
       }
     }
 
-    return { success: true, message: "تم إرسال النتيجة إلى التليجرام بنجاح!" };
+    return { success: true, message: "تم إرسال النتيجة والتفاصيل بنجاح!" };
   } catch (err: any) {
     console.error("Network / Telegram Error:", err);
     return {
@@ -232,7 +274,7 @@ export const testTelegramConfig = async (
     } else {
       return {
         success: false,
-        message: result.description || "فشل الاتصال بالبوت. تأكد من صحة التوكن والـ Chat ID.",
+        message: result.description || "فشل الاتصال بالبوت.",
       };
     }
   } catch (err: any) {
